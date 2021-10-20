@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const app = express();
+const methodOverride = require("method-override");
 const cors = require("cors");
 const passport = require("passport");
 const nodemailer = require("nodemailer");
@@ -13,6 +14,10 @@ app.use(cors());
 app.use(express.json());
 app.use("/", router);
 app.use(passport.initialize());
+app.use(methodOverride("_method"));
+app.use(methodOverride("X-HTTP-Method"));
+app.use(methodOverride("X-HTTP-Method-Override"));
+app.use(methodOverride("X-Method-Override"));
 
 // import models
 const contactEmail = nodemailer.createTransport({
@@ -60,6 +65,7 @@ router.post("/contact", (req, res) => {
 });
 
 app.use("/users", require("./controllers/users"));
+app.use("/testimonials", require("./controllers/testimonials"));
 
 const PORT = process.env.PORT || 8000;
 

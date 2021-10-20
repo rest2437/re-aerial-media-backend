@@ -7,12 +7,58 @@ const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = process.env;
 const router = express.Router();
 // Database
-const { User } = require("../models");
+const { User, Testimonial } = require("../models");
 
 // Controllers
 router.get("/test", (req, res) => {
   res.json({ message: "User endpoint OK! ✅" });
 });
+router.get(
+  "/testimonials",
+  // passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    console.log("====> inside /testimonials");
+    console.log("====> user", req.user);
+    try {
+      let { _id } = req.user;
+      let currentUser = await User.findById(_id);
+      let updateUser = await currentUser.populate("testimonial");
+      console.log(currentUser);
+      res.status(200).json({
+        update: updateUser,
+      });
+    } catch (error) {
+      console.log("router.get error", error);
+      res.status(500).json({
+        message: "Something went wrong. Please try again later!",
+      });
+    }
+  }
+);
+router.get(
+  "/testimonials",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    console.log("====> inside /testimonials");
+    console.log("====> user", req.user);
+    try {
+      let { _id } = req.user;
+      let currentUser = await User.findById(_id);
+
+      let updateUser = await currentUser.populate("testimonial");
+
+      console.log(currentUser);
+      res.status(200).json({
+        update: updateUser,
+      });
+    } catch (error) {
+      console.log("router.get error", error);
+      res.status(500).json({
+        message: "Something went wrong. Please try again later!",
+      });
+    }
+  }
+);
 
 router.post("/signup", async (req, res) => {
   // POST - adding the new user to the database
@@ -98,6 +144,34 @@ router.post("/login", async (req, res) => {
   }
 });
 
+router.post(
+  "/add",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    try {
+      console.log("====> inside testimonial/add");
+      console.log("====> user", req.user);
+
+      let { _id } = req.user;
+      let currentUser = await User.findById(_id);
+      let newTestimonial = await Testimonial.create({
+        name: req.body.name,
+        content: req.body.content,
+      });
+      console.log(currentUser.testimonial);
+      currentUser.testimonial.push(newTestimonial._id);
+      currentUser.save();
+      let updateTestimonial = await currentUser.populate("testimonial");
+      console.log(currentUser);
+      res.status(200).json({
+        update: updateTestimonial,
+      });
+    } catch (error) {
+      console.log("error", error);
+    }
+  }
+);
+
 // private route
 router.get(
   "/profile",
@@ -110,4 +184,53 @@ router.get(
   }
 );
 
+router.get(
+  "/token",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    const { _id } = req.user;
+
+    try {
+      const foundUser = await User.findById(_id);
+      const payload = {
+        id: foundUser.id,
+        email: foundUser.email,
+        name: foundUser.name,
+      };
+
+      jwt.sign(payload, JWT_SECRET, { expiresIn: 3600 }, (err, token) => {
+        if (err) {
+          res
+            .status(400)
+            .json({ message: "Session has endedd, please log in again" });
+        }
+        const legit = jwt.verify(token, JWT_SECRET, { expiresIn: 60 });
+        console.log("===> legit");
+        console.log(legit);
+        res.json({ success: true, token: `Bearer ${token}`, userData: legit });
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+);
+
+router.put("/update/:id", function (req, res) {
+  User.findByIdAndUpdate(
+    req.params.id,
+    {
+      name: req.body.name,
+      email: req.body.email,
+    },
+    function (err, response) {
+      if (err) {
+        res.send(err);
+      } else {
+        console.log(response);
+        console.log("user updated!");
+        res.status(200).json({ status: 200, message: "update successful" });
+      }
+    }
+  );
+});
 module.exports = router;

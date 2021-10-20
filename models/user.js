@@ -24,6 +24,12 @@ const userSchema = new Schema({
     type: Date,
     default: new Date(),
   },
+  testimonial: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Testimonial",
+    },
+  ],
 });
 
 const User = mongoose.model("User", userSchema);
