@@ -19,7 +19,6 @@ app.use(methodOverride("X-HTTP-Method"));
 app.use(methodOverride("X-HTTP-Method-Override"));
 app.use(methodOverride("X-Method-Override"));
 
-// import models
 const contactEmail = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -36,7 +35,6 @@ contactEmail.verify((error) => {
   }
 });
 
-// routes & controllers
 app.get("/", (req, res) => {
   res.json({
     name: "Template",
@@ -69,5 +67,4 @@ app.use("/testimonials", require("./controllers/testimonials"));
 
 const PORT = process.env.PORT || 8000;
 
-// listen to port
 app.listen(PORT, () => console.log(`Listening on PORT`, PORT));
